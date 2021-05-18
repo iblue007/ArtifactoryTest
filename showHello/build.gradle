@@ -1,0 +1,64 @@
+apply plugin: 'com.android.library'
+apply plugin: 'maven-publish'
+apply plugin: 'com.jfrog.artifactory'
+
+android {
+    compileSdkVersion 30
+    buildToolsVersion "30.0.2"
+
+    defaultConfig {
+        minSdkVersion 16
+        targetSdkVersion 30
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles "consumer-rules.pro"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: "libs", include: ["*.jar"])
+    implementation 'androidx.appcompat:appcompat:1.2.0'
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.1'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
+
+}
+
+//定义artifactory仓库的地址，按照你自己的修改
+def MAVEN_LOCAL_PATH = 'http://localhost:8081/artifactory'
+// 定义构件的相关信息
+// 当其他项目远程依赖该构件的时候，结构类似就是 implementation 'GROUP_ID:ARTIFACT_ID:VERSION_NAME'
+def GROUP_ID = 'com.cooloongwu.hello'
+def ARTIFACT_ID = 'hello.native'
+def VERSION_NAME = '1.0.3'
+publishing {
+    publications {
+        aar_pub(MavenPublication) {//注意这里定义的 aar_pub，在artifactoryPublish 下需要使用
+            groupId = GROUP_ID
+            artifactId = ARTIFACT_ID
+            version = VERSION_NAME
+
+            // aar文件所在的位置
+            // module打包后所在路径为module模块下的build/outputs/aar，生成的aar名称为：module名-release.aar
+            artifact("$buildDir/outputs/aar/${project.getName()}-release.aar")
+        }
+    }
+}
+
+artifactoryPublish {
+    contextUrl = MAVEN_LOCAL_PATH
+    publications ('aar_pub')		//注意这里使用的是上面定义的 aar_pub
+
+    clientConfig.publisher.repoKey = 'android_local'		//上传到的仓库地址
+    clientConfig.publisher.username = 'admin'		//artifactory 登录的用户名
+    clientConfig.publisher.password = 'password'	//artifactory 登录的密码
+}

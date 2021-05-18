@@ -1,0 +1,3 @@
+include ':showHello'
+include ':app'
+rootProject.name = "ArtifactoryTest"
